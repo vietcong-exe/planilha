@@ -24,36 +24,15 @@ export default async function Home({ searchParams }: PageProps) {
 
   const { data, error } = await query
 
-  // TEMPORARY DIAGNOSTIC — remove after debugging
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'MISSING'
-  const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (error || !data) {
-    return (
-      <div style={{ color: 'white', padding: '40px', fontFamily: 'monospace' }}>
-        <h2 style={{ color: 'red' }}>⚠ Supabase fetch failed</h2>
-        <p><b>URL:</b> {supabaseUrl.slice(0, 40)}...</p>
-        <p><b>Key present:</b> {String(hasKey)}</p>
-        <p><b>Error:</b> {error?.message ?? 'no error but data is null'}</p>
-        <p><b>Error code:</b> {error?.code ?? 'none'}</p>
-      </div>
-    )
-  }
+  if (error) console.error('[entries fetch]', error.message)
 
   const entries = (data as Entry[]) ?? []
 
   return (
-    <>
-      {/* TEMPORARY: show row count for debugging */}
-      {entries.length === 0 && (
-        <div style={{ color: 'yellow', padding: '8px 40px', fontFamily: 'monospace', fontSize: 12 }}>
-          DEBUG: query returned 0 rows | URL: {supabaseUrl.slice(0, 35)}... | key: {String(hasKey)}
-        </div>
-      )}
-      <DashboardClient
-        entries={entries}
-        dateFrom={searchParams.from ?? null}
-        dateTo={searchParams.to ?? null}
-      />
-    </>
+    <DashboardClient
+      entries={entries}
+      dateFrom={searchParams.from ?? null}
+      dateTo={searchParams.to ?? null}
+    />
   )
 }
