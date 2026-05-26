@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Entry } from '@/types'
 import { supabase } from '@/lib/supabase'
 
 interface Props {
   entry: Entry
+  onSuccess: () => void
   onClose: () => void
 }
 
@@ -15,8 +15,7 @@ function fmtDate(dateStr: string): string {
   return `${day}/${month}/${year}`
 }
 
-export default function DeleteConfirm({ entry, onClose }: Props) {
-  const router = useRouter()
+export default function DeleteConfirm({ entry, onSuccess, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,7 +30,7 @@ export default function DeleteConfirm({ entry, onClose }: Props) {
       return
     }
 
-    router.refresh()
+    onSuccess()
     onClose()
   }
 

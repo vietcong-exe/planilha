@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Entry, EntryFormData } from '@/types'
 import { supabase } from '@/lib/supabase'
 
 interface Props {
   entry: Entry | null   // null = create mode, non-null = edit mode
+  onSuccess: () => void
   onClose: () => void
 }
 
@@ -34,8 +34,7 @@ function signColor(val: number): string {
   return 'text-gray-500'
 }
 
-export default function EntryModal({ entry, onClose }: Props) {
-  const router = useRouter()
+export default function EntryModal({ entry, onSuccess, onClose }: Props) {
   const [form, setForm] = useState<EntryFormData>(toFormData(entry))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -94,7 +93,7 @@ export default function EntryModal({ entry, onClose }: Props) {
       return
     }
 
-    router.refresh()
+    onSuccess()
     onClose()
   }
 

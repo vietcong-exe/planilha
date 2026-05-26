@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Entry } from '@/types'
+import { supabase } from '@/lib/supabase'
 import SummaryCards from './SummaryCards'
 import PeriodFilter from './PeriodFilter'
 import EntriesTable from './EntriesTable'
@@ -14,10 +15,46 @@ interface Props {
   dateTo: string | null
 }
 
-export default function DashboardClient({ entries, dateFrom, dateTo }: Props) {
+export default function DashboardClient({ entries: initialEntries, dateFrom, dateTo }: Props) {
+  const [entries, setEntries] = useState<Entry[]>(initialEntries)
   const [modalOpen, setModalOpen] = useState(false)
   const [editEntry, setEditEntry] = useState<Entry | null>(null)
   const [deleteEntry, setDeleteEntry] = useState<Entry | null>(null)
+
+  // When the server re-fetches due to a period filter change, sync local state.
+  useEffect(() => {
+    setEntries(initialEntries)
+  }, [initialEntries])
+
+  // Client-side fetch — re-queries Supabase respecting the active date filter.
+  const fetchEntries = useCallback(async () => {
+    let query = supabase
+      .from('entries')
+      .select('*')
+      .order('date', { ascending: false })
+
+    if (dateFrom) query = query.gte('date', dateFrom)
+    if (dateTo)   query = query.lte('date', dateTo)
+
+    const { data } = await query
+    if (data) setEntries(data as Entry[])
+  }, [dateFrom, dateTo])
+
+  // Supabase Realtime — fires for ANY change made by either user.
+  useEffect(() => {
+    const channel = supabase
+      .channel('entries-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'entries' },
+        () => fetchEntries()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchEntries])
 
   function handleNewDay() {
     setEditEntry(null)
@@ -67,11 +104,19 @@ export default function DashboardClient({ entries, dateFrom, dateTo }: Props) {
       />
 
       {modalOpen && (
-        <EntryModal entry={editEntry} onClose={handleModalClose} />
+        <EntryModal
+          entry={editEntry}
+          onSuccess={fetchEntries}
+          onClose={handleModalClose}
+        />
       )}
 
       {deleteEntry && (
-        <DeleteConfirm entry={deleteEntry} onClose={handleDeleteClose} />
+        <DeleteConfirm
+          entry={deleteEntry}
+          onSuccess={fetchEntries}
+          onClose={handleDeleteClose}
+        />
       )}
     </div>
   )
