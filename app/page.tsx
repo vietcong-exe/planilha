@@ -2,6 +2,11 @@ import { createServerClient } from '@/lib/supabase-server'
 import { Entry } from '@/types'
 import DashboardClient from '@/components/DashboardClient'
 
+// Force dynamic rendering — prevents Next.js from caching Supabase fetch responses.
+// Without this, router.refresh() re-renders the component server-side but the
+// underlying fetch() calls return stale cached data instead of querying Supabase.
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   searchParams: { from?: string; to?: string }
 }
