@@ -64,17 +64,17 @@ export default function EntryModal({ entry, onClose }: Props) {
     e.preventDefault()
     setError(null)
 
+    if (!form.date) {
+      setError('Data é obrigatória.')
+      return
+    }
+
     const payload = {
       date: form.date,
       br4_in: parseNum(form.br4_in),
       br4_out: parseNum(form.br4_out),
       stake_in: parseNum(form.stake_in),
       stake_out: parseNum(form.stake_out),
-    }
-
-    if (!form.date) {
-      setError('Data é obrigatória.')
-      return
     }
 
     setLoading(true)

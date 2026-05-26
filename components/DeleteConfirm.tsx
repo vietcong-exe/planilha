@@ -18,11 +18,19 @@ function fmtDate(dateStr: string): string {
 export default function DeleteConfirm({ entry, onClose }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleDelete() {
     setLoading(true)
-    await supabase.from('entries').delete().eq('id', entry.id)
+    setError(null)
+    const result = await supabase.from('entries').delete().eq('id', entry.id)
     setLoading(false)
+
+    if (result.error) {
+      setError('Erro ao deletar. Tente novamente.')
+      return
+    }
+
     router.refresh()
     onClose()
   }
@@ -36,6 +44,7 @@ export default function DeleteConfirm({ entry, onClose }: Props) {
           <span className="text-white font-medium">{fmtDate(entry.date)}</span>?
           Esta ação não pode ser desfeita.
         </p>
+        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
         <div className="flex gap-3">
           <button
             onClick={handleDelete}
@@ -46,7 +55,8 @@ export default function DeleteConfirm({ entry, onClose }: Props) {
           </button>
           <button
             onClick={onClose}
-            className="bg-[#1a1a1a] border border-[#333] text-gray-500 px-5 py-2.5 rounded-lg hover:bg-[#222] transition-colors"
+            disabled={loading}
+            className="bg-[#1a1a1a] border border-[#333] text-gray-500 px-5 py-2.5 rounded-lg hover:bg-[#222] transition-colors disabled:opacity-40"
           >
             Cancelar
           </button>
